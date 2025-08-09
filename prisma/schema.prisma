@@ -1,0 +1,137 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  avatar      String?
+  googleId    String?  @unique
+  role        Role     @default(USER)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  createdEvents     Event[]           @relation("EventCreator")
+  eventParticipants EventParticipant[]
+  comments          Comment[]
+  commentReplies    CommentReply[]
+
+  @@map("users")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String?
+  location    String?
+  startDate   DateTime
+  endDate     DateTime
+  maxParticipants Int?
+  prizePool   Decimal? @db.Decimal(10, 2)
+  numberOfPrizes Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  creatorId     String
+  creator       User               @relation("EventCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  participants  EventParticipant[]
+  comments      Comment[]
+  prizes        Prize[]
+
+  @@map("events")
+}
+
+model Prize {
+  id        String  @id @default(cuid())
+  position  Int     // 1st place, 2nd place, etc.
+  amount    Decimal @db.Decimal(10, 2)
+  title     String? // e.g., "First Place", "Runner Up", etc.
+  
+  // Relations
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, position])
+  @@map("prizes")
+}
+
+model EventParticipant {
+  id          String   @id @default(cuid())
+  joinedAt    DateTime @default(now())
+  status      ParticipantStatus @default(JOINED)
+
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@map("event_participants")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  replies   CommentReply[]
+
+  @@map("comments")
+}
+
+model CommentReply {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentId String
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  // Self-referencing for nested replies
+  parentReplyId String?
+  parentReply   CommentReply? @relation("ReplyToReply", fields: [parentReplyId], references: [id], onDelete: Cascade)
+  childReplies  CommentReply[] @relation("ReplyToReply")
+
+  @@map("comment_replies")
+}
+
+enum ParticipantStatus {
+  JOINED
+  WAITLISTED
+  CANCELLED
+}
