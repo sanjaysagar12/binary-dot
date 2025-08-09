@@ -1,5 +1,5 @@
 
-import { IsString, IsOptional, IsNumber, IsDateString, IsArray, ValidateNested, Min, Max, IsNotEmpty, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsNumber, IsDateString, IsArray, ValidateNested, Min, Max, IsNotEmpty, MaxLength, IsBoolean } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
 export class PrizeDto {
@@ -110,14 +110,37 @@ export class CreateCommentReplyDto {
   parentReplyId?: string;
 }
 
-export class UpdateEventStatusDto {
-  @IsNotEmpty({ message: 'Event ID is required' })
-  @IsString({ message: 'Event ID must be a string' })
-  eventId: string;
+export class SelectWinnersDto {
+  @IsArray({ message: 'Winners must be an array' })
+  @ValidateNested({ each: true })
+  @Type(() => WinnerDto)
+  winners: WinnerDto[];
+}
 
-  @IsNotEmpty({ message: 'Active status is required' })
-  @Transform(({ value }) => value === 'true' || value === true)
-  isActive: boolean;
+export class WinnerDto {
+  @IsNotEmpty({ message: 'User ID is required' })
+  @IsString({ message: 'User ID must be a string' })
+  userId: string;
+
+  @IsNotEmpty({ message: 'Position is required' })
+  @IsNumber({}, { message: 'Position must be a number' })
+  @Min(1, { message: 'Position must be at least 1' })
+  position: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Prize amount must be a number' })
+  @Min(0, { message: 'Prize amount must be non-negative' })
+  prizeAmount?: number;
+}
+
+export class UpdateEventStatusDto {
+  @IsOptional()
+  @IsBoolean({ message: 'isActive must be a boolean' })
+  isActive?: boolean;
+
+  @IsOptional()
+  @IsBoolean({ message: 'isCompleted must be a boolean' })
+  isCompleted?: boolean;
 }
 
 export class GetEventParticipantsDto {

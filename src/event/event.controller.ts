@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards, Logger, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Logger, Param, Patch } from '@nestjs/common';
 import { Roles, Role } from 'src/application/common/decorator/roles.decorator';
 import { JwtGuard } from '../application/common/guards/jwt.guard';
 import { RolesGuard } from '../application/common/guards/roles.guard';
@@ -133,6 +133,62 @@ export class EventController {
     ) {
         this.logger.log(`Fetching detailed event data for: ${eventId}`);
         const data = await this.eventService.getEventById(eventId);
+        return {
+            status: 'success',
+            data: data,
+        };
+    }
+
+    @Post(':eventId/select-winners')
+    @UseGuards(JwtGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.MODERATOR)
+    async selectEventWinners(
+        @Param('eventId') eventId: string,
+        @Body() winnersData: any
+    ) {
+        this.logger.log(`Selecting winners for event: ${eventId}`);
+        const data = await this.eventService.selectEventWinners(eventId, winnersData.winners);
+        return {
+            status: 'success',
+            message: 'Winners selected successfully',
+            data: data,
+        };
+    }
+
+    @Patch(':eventId/status')
+    @UseGuards(JwtGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.MODERATOR)
+    async updateEventStatus(
+        @Param('eventId') eventId: string,
+        @Body() statusData: any
+    ) {
+        this.logger.log(`Updating status for event: ${eventId}`);
+        const data = await this.eventService.updateEventStatus(eventId, statusData);
+        return {
+            status: 'success',
+            message: 'Event status updated successfully',
+            data: data,
+        };
+    }
+
+    @Get(':eventId/winners')
+    async getEventWinners(
+        @Param('eventId') eventId: string
+    ) {
+        this.logger.log(`Fetching winners for event: ${eventId}`);
+        const data = await this.eventService.getEventWinners(eventId);
+        return {
+            status: 'success',
+            data: data,
+        };
+    }
+
+    @Get(':eventId/participants')
+    async getEventParticipants(
+        @Param('eventId') eventId: string
+    ) {
+        this.logger.log(`Fetching participants for event: ${eventId}`);
+        const data = await this.eventService.getEventParticipants(eventId);
         return {
             status: 'success',
             data: data,

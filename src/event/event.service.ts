@@ -549,6 +549,209 @@ export class EventService {
         };
     }
 
+    async selectEventWinners(eventId: string, winnersData: any[]) {
+        // Check if event exists and is active
+        const event = await this.prisma.event.findFirst({
+            where: {
+                id: eventId,
+                isActive: true,
+            },
+        });
+
+        if (!event) {
+            throw new Error('Event not found or inactive');
+        }
+
+        if (event.isCompleted) {
+            throw new Error('Event is already completed');
+        }
+
+        // Validate that all winners are participants
+        for (const winner of winnersData) {
+            const participant = await this.prisma.eventParticipant.findUnique({
+                where: {
+                    userId_eventId: {
+                        userId: winner.userId,
+                        eventId: eventId,
+                    },
+                },
+            });
+
+            if (!participant) {
+                throw new Error(`User ${winner.userId} is not a participant in this event`);
+            }
+        }
+
+        // Create winners and mark event as completed
+        const winners = await this.prisma.$transaction(async (tx) => {
+            // Delete existing winners if any
+            await tx.eventWinner.deleteMany({
+                where: { eventId: eventId },
+            });
+
+            // Create new winners
+            const createdWinners = await Promise.all(
+                winnersData.map(winner =>
+                    tx.eventWinner.create({
+                        data: {
+                            userId: winner.userId,
+                            eventId: eventId,
+                            position: winner.position,
+                            prizeAmount: winner.prizeAmount,
+                        },
+                        include: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    email: true,
+                                    avatar: true,
+                                    walletAddress: true,
+                                },
+                            },
+                        },
+                    })
+                )
+            );
+
+            // Mark event as completed
+            await tx.event.update({
+                where: { id: eventId },
+                data: {
+                    isCompleted: true,
+                    completedAt: new Date(),
+                },
+            });
+
+            return createdWinners;
+        });
+
+        return winners;
+    }
+
+    async updateEventStatus(eventId: string, statusData: { isActive?: boolean; isCompleted?: boolean }) {
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+        });
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        const updateData: any = {};
+        
+        if (statusData.isActive !== undefined) {
+            updateData.isActive = statusData.isActive;
+        }
+        
+        if (statusData.isCompleted !== undefined) {
+            updateData.isCompleted = statusData.isCompleted;
+            if (statusData.isCompleted && !event.completedAt) {
+                updateData.completedAt = new Date();
+            } else if (!statusData.isCompleted) {
+                updateData.completedAt = null;
+            }
+        }
+
+        return await this.prisma.event.update({
+            where: { id: eventId },
+            data: updateData,
+            include: {
+                creator: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                    },
+                },
+                prizes: {
+                    orderBy: {
+                        position: 'asc',
+                    },
+                },
+                winners: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                avatar: true,
+                                walletAddress: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        position: 'asc',
+                    },
+                },
+                _count: {
+                    select: {
+                        participants: true,
+                        comments: true,
+                    },
+                },
+            },
+        });
+    }
+
+    async getEventWinners(eventId: string) {
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+        });
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        return await this.prisma.eventWinner.findMany({
+            where: { eventId: eventId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        walletAddress: true,
+                    },
+                },
+            },
+            orderBy: {
+                position: 'asc',
+            },
+        });
+    }
+
+    async getEventParticipants(eventId: string) {
+        const event = await this.prisma.event.findUnique({
+            where: { id: eventId },
+        });
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        return await this.prisma.eventParticipant.findMany({
+            where: { eventId: eventId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                        walletAddress: true,
+                    },
+                },
+            },
+            orderBy: {
+                joinedAt: 'asc',
+            },
+        });
+    }
+
     async getAllComments() {
         return await this.prisma.comment.findMany({
             include: {
