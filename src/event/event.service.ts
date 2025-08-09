@@ -439,6 +439,39 @@ export class EventService {
         return event;
     }
 
+    async getEventsByTag(tag: string) {
+        return await this.prisma.event.findMany({
+            where: {
+                isActive: true,
+                tag: {
+                    equals: tag,
+                    mode: 'insensitive', // Case-insensitive search
+                },
+            },
+            include: {
+                creator: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                prizes: true,
+                _count: {
+                    select: {
+                        participants: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        }).catch(error => {
+            console.error('Error fetching events by tag:', error);
+            throw new Error('Failed to fetch events by tag');
+        });
+    }
+
     async getAllComments() {
         return await this.prisma.comment.findMany({
             include: {

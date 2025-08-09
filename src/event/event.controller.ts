@@ -89,6 +89,18 @@ export class EventController {
         };
     }
 
+    @Get('tag/:tag')
+    async getEventsByTag(
+        @Param('tag') tag: string
+    ) {
+        this.logger.log(`Fetching events with tag: ${tag}`);
+        const data = await this.eventService.getEventsByTag(tag);
+        return {
+            status: 'success',
+            data: data,
+        };
+    }
+
     @Get('comments/all')
     @UseGuards(JwtGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.MODERATOR, Role.USER)
