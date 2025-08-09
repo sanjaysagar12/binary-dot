@@ -89,6 +89,20 @@ export class EventController {
         };
     }
 
+    @Get('my')
+    @UseGuards(JwtGuard, RolesGuard)
+    @Roles(Role.USER, Role.ADMIN, Role.MODERATOR)
+    async getMyEvents(
+        @GetUser('sub') userId: string
+    ) {
+        this.logger.log(`Fetching events for user: ${userId}`);
+        const data = await this.eventService.getMyEvents(userId);
+        return {
+            status: 'success',
+            data: data,
+        };
+    }
+
     @Get('tag/:tag')
     async getEventsByTag(
         @Param('tag') tag: string

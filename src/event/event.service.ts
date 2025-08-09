@@ -472,6 +472,83 @@ export class EventService {
         });
     }
 
+    async getMyEvents(userId: string) {
+        // Get events created by the user
+        const createdEvents = await this.prisma.event.findMany({
+            where: {
+                creatorId: userId,
+            },
+            include: {
+                creator: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                    },
+                },
+                prizes: {
+                    orderBy: {
+                        position: 'asc',
+                    },
+                },
+                _count: {
+                    select: {
+                        participants: true,
+                        comments: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        });
+
+        // Get events the user is participating in
+        const participatingEvents = await this.prisma.eventParticipant.findMany({
+            where: {
+                userId: userId,
+            },
+            include: {
+                event: {
+                    include: {
+                        creator: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                avatar: true,
+                            },
+                        },
+                        prizes: {
+                            orderBy: {
+                                position: 'asc',
+                            },
+                        },
+                        _count: {
+                            select: {
+                                participants: true,
+                                comments: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                joinedAt: 'desc',
+            },
+        });
+
+        return {
+            createdEvents: createdEvents,
+            participatingEvents: participatingEvents.map(p => ({
+                ...p.event,
+                participantStatus: p.status,
+                joinedAt: p.joinedAt,
+            })),
+        };
+    }
+
     async getAllComments() {
         return await this.prisma.comment.findMany({
             include: {
