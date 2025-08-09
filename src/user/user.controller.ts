@@ -14,7 +14,7 @@ export class UserController {
         
     }
     @Get('me')
-    @Roles(Role.USER, Role.ADMIN)
+    @Roles(Role.USER, Role.MODERATOR, Role.ADMIN)
     async getUserMe(
         @GetUser('sub') userId: string,
     ) {
