@@ -21,14 +21,8 @@ export class AuthController {
         // After successful Google authentication, generate JWT
         const token = await this.authService.googleSignin(req.user.id, req.user.role);
         console.log('Generated JWT:', token);
-        res.cookie('auth_token', token, {
-            httpOnly: true,
-            secure: false, // since you're on HTTP localhost
-            sameSite: 'lax',
-            maxAge: 1000 * 60 * 60 * 24,
-        });
 
-        // Redirect to frontend or send success response
-        return res.redirect('http://localhost:3001/profile'); // or wherever you want to redirect
+        // Redirect to frontend with token in URL
+        return res.redirect(`http://localhost:4000/auth/callback?token=${token}`);
     }
 }
