@@ -97,6 +97,7 @@ model EventParticipant {
 model Comment {
   id        String   @id @default(cuid())
   content   String
+  image     String?  // Optional image URL/path for comments
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

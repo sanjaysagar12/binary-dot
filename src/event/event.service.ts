@@ -164,6 +164,7 @@ export class EventService {
         return await this.prisma.comment.create({
             data: {
                 content: commentData.content,
+                image: commentData.image,
                 userId: userId,
                 eventId: commentData.eventId,
             },
@@ -326,5 +327,114 @@ export class EventService {
             console.error('Error fetching event comments:', error);
             throw new Error('Failed to fetch event comments');
         });
+    }
+
+    async getEventById(eventId: string) {
+        // Check if event exists
+        const event = await this.prisma.event.findUnique({
+            where: {
+                id: eventId,
+            },
+            include: {
+                creator: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatar: true,
+                    },
+                },
+                prizes: {
+                    orderBy: {
+                        position: 'asc',
+                    },
+                },
+                participants: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                avatar: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        joinedAt: 'asc',
+                    },
+                },
+                comments: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true,
+                            },
+                        },
+                        replies: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        avatar: true,
+                                    },
+                                },
+                                parentReply: {
+                                    select: {
+                                        id: true,
+                                        content: true,
+                                        user: {
+                                            select: {
+                                                name: true,
+                                            },
+                                        },
+                                    },
+                                },
+                                childReplies: {
+                                    include: {
+                                        user: {
+                                            select: {
+                                                id: true,
+                                                name: true,
+                                                avatar: true,
+                                            },
+                                        },
+                                    },
+                                    orderBy: {
+                                        createdAt: 'asc',
+                                    },
+                                },
+                            },
+                            orderBy: {
+                                createdAt: 'asc',
+                            },
+                        },
+                        _count: {
+                            select: {
+                                replies: true,
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: 'desc',
+                    },
+                },
+                _count: {
+                    select: {
+                        participants: true,
+                        comments: true,
+                    },
+                },
+            },
+        });
+
+        if (!event) {
+            throw new Error('Event not found');
+        }
+
+        return event;
     }
 }

@@ -84,6 +84,10 @@ export class CreateCommentDto {
   @IsNotEmpty({ message: 'Event ID is required' })
   @IsString({ message: 'Event ID must be a string' })
   eventId: string;
+
+  @IsOptional()
+  @IsString({ message: 'Image must be a string' })
+  image?: string;
 }
 
 export class CreateCommentReplyDto {

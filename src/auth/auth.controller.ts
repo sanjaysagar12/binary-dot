@@ -23,6 +23,6 @@ export class AuthController {
         console.log('Generated JWT:', token);
 
         // Redirect to frontend with token in URL
-        return res.redirect(`http://localhost:4000/auth/callback?token=${token}`);
+        return res.redirect(`http://localhost:4000/auth/callback?token=${token.access_token}`);
     }
 }

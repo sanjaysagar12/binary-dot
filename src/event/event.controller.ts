@@ -58,7 +58,7 @@ export class EventController {
     @Post('comment')
     @UseGuards(JwtGuard, RolesGuard)
 
-    @Roles(Role.USER, Role.ADMIN)
+    @Roles(Role.USER, Role.MODERATOR)
     async createComment(
         @GetUser('sub') userId: string,
         @Body() commentData: CreateCommentDto
@@ -75,7 +75,7 @@ export class EventController {
     @Post('comment/reply')
     @UseGuards(JwtGuard, RolesGuard)
 
-    @Roles(Role.USER, Role.ADMIN)
+    @Roles(Role.USER, Role.MODERATOR)
     async createCommentReply(
         @GetUser('sub') userId: string,
         @Body() replyData: CreateCommentReplyDto
@@ -85,6 +85,18 @@ export class EventController {
         return {
             status: 'success',
             message: 'Reply created successfully',
+            data: data,
+        };
+    }
+
+    @Get(':eventId')
+    async getEventById(
+        @Param('eventId') eventId: string
+    ) {
+        this.logger.log(`Fetching detailed event data for: ${eventId}`);
+        const data = await this.eventService.getEventById(eventId);
+        return {
+            status: 'success',
             data: data,
         };
     }
