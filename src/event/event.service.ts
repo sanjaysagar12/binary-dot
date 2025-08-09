@@ -13,6 +13,7 @@ export class EventService {
                 description: eventData.description,
                 image: eventData.image,
                 location: eventData.location,
+                tag: eventData.tag,
                 startDate: new Date(eventData.startDate),
                 endDate: new Date(eventData.endDate),
                 maxParticipants: eventData.maxParticipants,

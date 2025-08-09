@@ -37,6 +37,11 @@ export class CreateEventDto {
   @MaxLength(500, { message: 'Location must not exceed 500 characters' })
   location?: string;
 
+  @IsOptional()
+  @IsString({ message: 'Tag must be a string' })
+  @MaxLength(50, { message: 'Tag must not exceed 50 characters' })
+  tag?: string;
+
   @IsNotEmpty({ message: 'Start date is required' })
   @IsDateString({}, { message: 'Start date must be a valid date string' })
   startDate: string;

@@ -46,6 +46,7 @@ model Event {
   description String
   image       String?
   location    String?
+  tag         String?  // Optional tag for event categorization
   startDate   DateTime
   endDate     DateTime
   maxParticipants Int?
