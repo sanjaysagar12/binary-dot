@@ -437,4 +437,74 @@ export class EventService {
 
         return event;
     }
+
+    async getAllComments() {
+        return await this.prisma.comment.findMany({
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar: true,
+                    },
+                },
+                event: {
+                    select: {
+                        id: true,
+                        title: true,
+                    },
+                },
+                replies: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                avatar: true,
+                            },
+                        },
+                        parentReply: {
+                            select: {
+                                id: true,
+                                content: true,
+                                user: {
+                                    select: {
+                                        name: true,
+                                    },
+                                },
+                            },
+                        },
+                        childReplies: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        avatar: true,
+                                    },
+                                },
+                            },
+                            orderBy: {
+                                createdAt: 'asc',
+                            },
+                        },
+                    },
+                    orderBy: {
+                        createdAt: 'asc',
+                    },
+                },
+                _count: {
+                    select: {
+                        replies: true,
+                    },
+                },
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        }).catch(error => {
+            console.error('Error fetching all comments:', error);
+            throw new Error('Failed to fetch all comments');
+        });
+    }
 }

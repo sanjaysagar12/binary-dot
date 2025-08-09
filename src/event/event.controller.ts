@@ -89,6 +89,18 @@ export class EventController {
         };
     }
 
+    @Get('comments/all')
+    @UseGuards(JwtGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.MODERATOR, Role.USER)
+    async getAllComments() {
+        this.logger.log('Fetching all comments from all events');
+        const data = await this.eventService.getAllComments();
+        return {
+            status: 'success',
+            data: data,
+        };
+    }
+
     @Get(':eventId')
     async getEventById(
         @Param('eventId') eventId: string
