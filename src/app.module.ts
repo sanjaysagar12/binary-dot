@@ -8,9 +8,10 @@ import { UserModule } from './user/user.module';
 import { EventModule } from './event/event.module';
 import { S3Module } from './s3/s3.module';
 import { WalletModule } from './wallet/wallet.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, UserModule, EventModule, S3Module, WalletModule],
+  imports: [AuthModule, PrismaModule, UserModule, EventModule, S3Module, WalletModule, ChatModule],
   controllers: [AppController],
   providers: [AppService, PrismaService],
 })

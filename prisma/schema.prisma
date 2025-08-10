@@ -40,6 +40,11 @@ model User {
   comments          Comment[]
   commentReplies    CommentReply[]
   eventWinners      EventWinner[]     // Events where user won prizes
+  
+  // Chat relations
+  sentMessages      ChatMessage[]     @relation("MessageSender")
+  receivedMessages  ChatMessage[]     @relation("MessageReceiver")
+  chatParticipants  ChatParticipant[]
 
   @@map("users")
 }
@@ -69,6 +74,7 @@ model Event {
   comments      Comment[]
   prizes        Prize[]
   winners       EventWinner[]      // Winners of the event
+  chats         Chat[]             // Event chats
 
   @@map("events")
 }
@@ -160,4 +166,58 @@ enum ParticipantStatus {
   JOINED
   WAITLISTED
   CANCELLED
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  eventId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  messages     ChatMessage[]
+  participants ChatParticipant[]
+
+  @@map("chats")
+}
+
+model ChatParticipant {
+  id       String   @id @default(cuid())
+  userId   String
+  chatId   String
+  joinedAt DateTime @default(now())
+  isActive Boolean  @default(true)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chatId])
+  @@map("chat_participants")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String
+  image     String?  // Optional image URL/path for messages
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  senderId   String
+  receiverId String
+  chatId     String
+  sender     User @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  chat       Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
 }
