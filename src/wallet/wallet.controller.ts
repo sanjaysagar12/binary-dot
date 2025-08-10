@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, UseGuards, Logger, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, UseGuards, Logger, BadRequestException, Param } from '@nestjs/common';
 import { WalletService } from './wallet.service';
 import { JwtGuard } from '../application/common/guards/jwt.guard';
 import { GetUser } from 'src/application/common/decorator/get-user.decorator';
@@ -71,6 +71,21 @@ export class WalletController {
             };
         } catch (error) {
             this.logger.error(`Error updating wallet: ${error.message}`);
+            throw new BadRequestException(error.message);
+        }
+    }
+
+    @Get('user/:userId')
+    async getUserWalletById(@Param('userId') userId: string) {
+        this.logger.log(`Fetching wallet info for user ID: ${userId}`);
+        try {
+            const data = await this.walletService.getUserWallet(userId);
+            return {
+                status: 'success',
+                data: data,
+            };
+        } catch (error) {
+            this.logger.error(`Error fetching wallet info for user ${userId}: ${error.message}`);
             throw new BadRequestException(error.message);
         }
     }

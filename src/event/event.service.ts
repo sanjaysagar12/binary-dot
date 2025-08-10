@@ -358,6 +358,7 @@ export class EventService {
                                 name: true,
                                 email: true,
                                 avatar: true,
+                                walletAddress: true,
                             },
                         },
                     },
